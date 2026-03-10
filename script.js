@@ -1,10 +1,10 @@
 // book log project
-// this script handles adding books, searching, sorting, rating, and deleting
 
 // get things from the html page
 const movieForm = document.getElementById("movieForm");
 const titleInput = document.getElementById("title");
 const genreInput = document.getElementById("genre");
+const authorInput = document.getElementById("author");
 const yearInput = document.getElementById("year");
 const statusInput = document.getElementById("status");
 
@@ -27,6 +27,7 @@ let movies = [
     id: crypto.randomUUID(),
     title: "The Hunger Games",
     genre: "Dystopian",
+    author: "Suzanne Collins",
     year: 2008,
     status: "Completed",
     rating: 5,
@@ -36,6 +37,7 @@ let movies = [
     id: crypto.randomUUID(),
     title: "Twilight",
     genre: "Fantasy",
+    author: "Stephenie Meyer",
     year: 2005,
     status: "To Read",
     rating: 0,
@@ -57,19 +59,16 @@ function showToast(message) {
 
 // simple confetti animation when book is completed
 function celebrate() {
-
   confetti.innerHTML = "";
 
   let pieces = 40;
 
   for (let i = 0; i < pieces; i++) {
-
     let piece = document.createElement("div");
     piece.className = "confettiPiece";
 
     piece.style.left = Math.random() * 100 + "vw";
     piece.style.top = "-10px";
-
     piece.style.background =
       "hsl(" + Math.floor(Math.random() * 360) + ",90%,60%)";
 
@@ -90,13 +89,11 @@ function celebrate() {
 
 // update number of books
 function updateCount(n) {
-
   if (n === 1) {
     countText.textContent = "1 book";
   } else {
     countText.textContent = n + " books";
   }
-
 }
 
 
@@ -108,15 +105,17 @@ function normalize(text) {
 
 // filter and sort books
 function getVisibleMovies() {
-
   let result = [...movies];
 
-  // search by title
+  // search by title or author
   let q = normalize(searchInput.value);
 
   if (q.length > 0) {
     result = result.filter(function (m) {
-      return normalize(m.title).includes(q);
+      return (
+        normalize(m.title).includes(q) ||
+        normalize(m.author).includes(q)
+      );
     });
   }
 
@@ -162,7 +161,6 @@ function getVisibleMovies() {
 
 // draw books on screen
 function render() {
-
   let visible = getVisibleMovies();
 
   movieList.innerHTML = "";
@@ -177,12 +175,10 @@ function render() {
 
   // create a card for each book
   for (let movie of visible) {
-
     let card = document.createElement("div");
     card.className = "movieCard";
 
-
-    // left side with title and year
+    // left side with title and info
     let left = document.createElement("div");
 
     let titleLine = document.createElement("div");
@@ -191,17 +187,15 @@ function render() {
 
     let smallLine = document.createElement("div");
     smallLine.className = "smallLine";
-    smallLine.textContent = "Year: " + movie.year;
+    smallLine.textContent = "Author: " + movie.author + " | Year: " + movie.year;
 
     left.appendChild(titleLine);
     left.appendChild(smallLine);
-
 
     // genre tag
     let genreTag = document.createElement("div");
     genreTag.className = "tag";
     genreTag.textContent = movie.genre;
-
 
     // dropdown to change reading status
     let statusSelect = document.createElement("select");
@@ -214,11 +208,8 @@ function render() {
 
     statusSelect.value = movie.status;
 
-
     statusSelect.addEventListener("change", function () {
-
       let oldStatus = movie.status;
-
       movie.status = statusSelect.value;
 
       // celebrate when a book becomes completed
@@ -233,9 +224,7 @@ function render() {
       }
 
       render();
-
     });
-
 
     // star rating
     let starsWrap = document.createElement("div");
@@ -244,41 +233,30 @@ function render() {
     let isCompleted = movie.status === "Completed";
 
     for (let s = 1; s <= 5; s++) {
-
       let btn = document.createElement("button");
 
       btn.type = "button";
       btn.className = "starBtn";
 
       if (s <= (movie.rating || 0)) {
-        btn.textContent = "⭐";
+        btn.textContent = "★";
       } else {
         btn.textContent = "☆";
       }
 
       if (!isCompleted) {
-
         btn.classList.add("disabled");
         btn.disabled = true;
-
       } else {
-
         btn.addEventListener("click", function () {
-
           movie.rating = s;
-
           showToast("rated " + s + " stars");
-
           render();
-
         });
-
       }
 
       starsWrap.appendChild(btn);
-
     }
-
 
     // delete button
     let del = document.createElement("button");
@@ -288,8 +266,7 @@ function render() {
     del.textContent = "Delete";
 
     del.addEventListener("click", function () {
-
-      let ok = confirm('Delete "' + movie.title + '" ?');
+      let ok = confirm('Delete "' + movie.title + '"?');
 
       if (!ok) return;
 
@@ -298,11 +275,8 @@ function render() {
       });
 
       showToast("deleted");
-
       render();
-
     });
-
 
     card.appendChild(left);
     card.appendChild(genreTag);
@@ -311,24 +285,22 @@ function render() {
     card.appendChild(del);
 
     movieList.appendChild(card);
-
   }
-
 }
 
 
 // when user adds a book
 movieForm.addEventListener("submit", function (e) {
-
   e.preventDefault();
 
   let title = titleInput.value.trim();
   let genre = genreInput.value.trim();
+  let author = authorInput.value.trim();
   let year = Number(yearInput.value);
   let status = statusInput.value;
 
   // simple form check
-  if (!title || !genre || !year) {
+  if (!title || !genre || !author || !year) {
     formMsg.textContent = "please fill all fields";
     return;
   }
@@ -339,23 +311,22 @@ movieForm.addEventListener("submit", function (e) {
   }
 
   let movie = {
-
     id: crypto.randomUUID(),
     title: title,
     genre: genre,
+    author: author,
     year: year,
     status: status,
     rating: 0,
     createdAt: Date.now()
-
   };
 
   movies.unshift(movie);
 
-
   // clear form
   titleInput.value = "";
   genreInput.value = "";
+  authorInput.value = "";
   yearInput.value = "";
   statusInput.value = "To Read";
 
@@ -365,18 +336,13 @@ movieForm.addEventListener("submit", function (e) {
     formMsg.textContent = "";
   }, 1200);
 
-
   // celebrate if added as completed
   if (movie.status === "Completed") {
-
     showToast("book completed");
-
     celebrate();
-
   }
 
   render();
-
 });
 
 
