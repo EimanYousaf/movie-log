@@ -21,7 +21,7 @@ const toast = document.getElementById("toast");
 const confetti = document.getElementById("confetti");
 
 
-// list that stores all books
+// starter books
 let movies = [
   {
     id: crypto.randomUUID(),
@@ -44,6 +44,22 @@ let movies = [
     createdAt: Date.now() - 10000
   }
 ];
+
+
+// save books in local storage
+function saveBooks() {
+  localStorage.setItem("myBooks", JSON.stringify(movies));
+}
+
+
+// load books from local storage
+function loadBooks() {
+  let savedBooks = localStorage.getItem("myBooks");
+
+  if (savedBooks) {
+    movies = JSON.parse(savedBooks);
+  }
+}
 
 
 // small popup message
@@ -223,6 +239,7 @@ function render() {
         movie.rating = 0;
       }
 
+      saveBooks();
       render();
     });
 
@@ -251,6 +268,7 @@ function render() {
         btn.addEventListener("click", function () {
           movie.rating = s;
           showToast("rated " + s + " stars");
+          saveBooks();
           render();
         });
       }
@@ -275,6 +293,7 @@ function render() {
       });
 
       showToast("deleted");
+      saveBooks();
       render();
     });
 
@@ -322,6 +341,7 @@ movieForm.addEventListener("submit", function (e) {
   };
 
   movies.unshift(movie);
+  saveBooks();
 
   // clear form
   titleInput.value = "";
@@ -351,6 +371,9 @@ searchInput.addEventListener("input", render);
 filterStatus.addEventListener("change", render);
 sortBy.addEventListener("change", render);
 
+
+// load saved books first
+loadBooks();
 
 // first time showing books
 render();
